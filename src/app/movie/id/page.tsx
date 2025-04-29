@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { ArrowLeft, Play, SeparatorHorizontal, Star, TypeOutline } from "lucide-react"
-import * as Separator from '@radix-ui/react-separator';
 import Badge from "@/components/Badge";
+import { Separator } from "@/components/ui/separator"
 
 export default function MovieDetailPage() {
     const trailer = "https://www.youtube.com/watch?v=example";
@@ -62,7 +62,7 @@ export default function MovieDetailPage() {
                                 ))}
                             </div>
 
-                            <Separator.Root className="my-4 bg-gray-700" />
+                            <Separator className="my-4 bg-gray-700" />
 
                             <div className="space-y-4 text-gray-200">
                                 <div>
