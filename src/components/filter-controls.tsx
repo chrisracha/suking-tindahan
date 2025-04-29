@@ -3,9 +3,12 @@
 import { useState } from "react"
 import * as Slider from "@radix-ui/react-slider";
 import { useRouter } from "next/navigation"
+import { Star } from "lucide-react"
+import { Button } from "@/components/ui/button"
 
 export default function FilterControls() {
     const router = useRouter()
+    const [popularity, setPopularity] = useState(3)
     const [duration, setDuration] = useState([90]) // Default to 90 minutes
 
     // Duration labels
@@ -33,8 +36,26 @@ export default function FilterControls() {
 
     return (
         <div>
-            {/* Duration Filter */}
             <div className="space-y-3">
+                {/* Popularity */}
+                <div className="flex items-center justify-center gap-2">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                            key={star}
+                            onClick={() => setPopularity(star)}
+                            className="relative p-1 transition-all hover:scale-110"
+                            aria-label={`Rate ${star} stars`}
+                        >
+                            <Star
+                                className={`h-8 w-8 ${star <= popularity
+                                        ? "fill-[#00E054] text-[#00E054]" 
+                                        : "text-gray-600 stroke-[1.5]"
+                                    }`}
+                            />
+                        </button>
+                    ))}
+                </div>
+                {/* Duration Time */}
                 <div className="flex justify-between items-center">
                     <label className="text-gray-300 text-sm">Duration:</label>
                     <span className="text-purple-200 font-medium">{getCurrentDurationLabel()}</span>

@@ -15,6 +15,8 @@ export default function Home() {
               <div className="space-y-4">
                 {/* Emotion Selection */}
                 <EmotionSelector />
+              </div>
+              <div className="space-y-4">
                 {/* Filters */}
                 <FilterControls />
               </div>
