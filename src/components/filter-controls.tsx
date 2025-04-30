@@ -38,6 +38,10 @@ export default function FilterControls() {
         <div>
             <div className="space-y-3">
                 {/* Popularity */}
+                <div className="flex justify-between items-center">
+                    <label className="text-gray-300 text-sm">Popularity:</label>
+                    <span className="text-purple-200 font-medium">{popularity}/5</span>
+                </div>
                 <div className="flex items-center justify-center gap-2">
                     {[1, 2, 3, 4, 5].map((star) => (
                         <button
@@ -48,41 +52,41 @@ export default function FilterControls() {
                         >
                             <Star
                                 className={`h-8 w-8 ${star <= popularity
-                                        ? "fill-[#00E054] text-[#00E054]" 
+                                        ? "fill-[#00E054] text-[#00E054]" // Letterboxd green
                                         : "text-gray-600 stroke-[1.5]"
                                     }`}
                             />
                         </button>
                     ))}
                 </div>
-                {/* Duration Time */}
-                <div className="flex justify-between items-center">
-                    <label className="text-gray-300 text-sm">Duration:</label>
-                    <span className="text-purple-200 font-medium">{getCurrentDurationLabel()}</span>
-                </div>
-                <div className="px-1">
-                    <Slider.Root
-                        className="relative flex items-center select-none touch-none w-full h-5"
-                        value={duration}
-                        onValueChange={setDuration}
-                        max={120}
-                        min={10}
-                        step={1}
-                    >
-                        <Slider.Track className="bg-gray-700 relative grow rounded-full h-[3px]">
-                            <Slider.Range className="absolute bg-gradient-to-r from-pink-400 to-purple-500 rounded-full h-full" />
-                        </Slider.Track>
-                        <Slider.Thumb className="block w-5 h-5 bg-gradient-to-r from-pink-400 to-purple-500 rounded-full shadow hover:bg-pink-500 focus:outline-none" />
-                    </Slider.Root>
+            </div>
+            {/* Duration Time */}
+            <div className="flex justify-between items-center">
+                <label className="text-gray-300 text-sm">Duration:</label>
+                <span className="text-purple-200 font-medium">{getCurrentDurationLabel()}</span>
+            </div>
+            <div className="px-1">
+                <Slider.Root
+                    className="relative flex items-center select-none touch-none w-full h-5"
+                    value={duration}
+                    onValueChange={setDuration}
+                    max={120}
+                    min={10}
+                    step={1}
+                >
+                    <Slider.Track className="bg-gray-700 relative grow rounded-full h-[3px]">
+                        <Slider.Range className="absolute bg-gradient-to-r from-pink-400 to-purple-500 rounded-full h-full" />
+                    </Slider.Track>
+                    <Slider.Thumb className="block w-5 h-5 bg-gradient-to-r from-pink-400 to-purple-500 rounded-full shadow hover:bg-pink-500 focus:outline-none" />
+                </Slider.Root>
 
-                    <div className="flex justify-between mt-2 text-xs text-gray-400">
-                        {durationLabels.map((label, index) => (
-                            <div key={index} className="flex flex-col items-center">
-                                <span className="h-1 w-1 rounded-full bg-gray-500 mb-1"></span>
-                                {label.label}
-                            </div>
-                        ))}
-                    </div>
+                <div className="flex justify-between mt-2 text-xs text-gray-400">
+                    {durationLabels.map((label, index) => (
+                        <div key={index} className="flex flex-col items-center">
+                            <span className="h-1 w-1 rounded-full bg-gray-500 mb-1"></span>
+                            {label.label}
+                        </div>
+                    ))}
                 </div>
             </div>
         </div>

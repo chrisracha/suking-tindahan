@@ -21,6 +21,10 @@ export default function Reccomendations() {
                         </p>
                         <div className="flex items-center gap-2 mb-8 text-gray-400 text-sm">
                             <span>
+                                Popularity: 3/5 
+                            </span>
+                            <span>•</span>
+                            <span>
                                 Duration: 1h 55m
                             </span>
                         </div>
