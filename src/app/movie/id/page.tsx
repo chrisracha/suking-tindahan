@@ -46,7 +46,7 @@ export default function MovieDetailPage() {
                             <div className="flex items-center gap-2 mt-2 text-gray-300">
                                 <div className="flex items-center">
                                     <Star className="h-5 w-5 text-yellow-400 fill-yellow-400" />
-                                    <span className="ml-1 font-bold">7.8/10</span>
+                                    <span className="ml-1 font-bold">3/5</span>
                                 </div>
                                 <span className="text-gray-500">•</span>
                                 <span>2013</span>
