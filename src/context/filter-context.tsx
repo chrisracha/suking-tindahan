@@ -7,6 +7,8 @@ type FilterContextType = {
   setPopularity: (value: number) => void
   duration: number
   setDuration: (value: number) => void
+  decade: string | null
+  setDecade: (value: string | null) => void
 }
 
 export const FilterContext = createContext<FilterContextType>({
@@ -14,14 +16,17 @@ export const FilterContext = createContext<FilterContextType>({
   setPopularity: () => { },
   duration: 90,
   setDuration: () => { },
+  decade: null,
+  setDecade: () => {},
 })
 
 export function FilterProvider({ children }: { children: ReactNode }) {
   const [popularity, setPopularity] = useState(3)
   const [duration, setDuration] = useState(90)
+  const [decade, setDecade] = useState<string | null>(null)
 
   return (
-    <FilterContext.Provider value={{ popularity, setPopularity, duration, setDuration }}>
+    <FilterContext.Provider value={{ popularity, setPopularity, duration, setDuration, decade, setDecade }}>
       {children}
     </FilterContext.Provider>
   )

@@ -10,6 +10,16 @@ export default function FilterControls() {
     const router = useRouter()
     const [popularity, setPopularity] = useState(3)
     const [duration, setDuration] = useState([90]) // Default to 90 minutes
+    const [decade, setDecade] = useState<string | null>(null)
+
+    // Decade options
+    const decades = [
+        { value: "80s", label: "80s", years: [1980, 1989] },
+        { value: "90s", label: "90s", years: [1990, 1999] },
+        { value: "00s", label: "00s", years: [2000, 2009] },
+        { value: "10s", label: "10s", years: [2010, 2019] },
+        { value: "20s", label: "20s", years: [2020, 2029] },
+    ]
 
     // Duration labels
     const durationLabels = [
@@ -35,9 +45,41 @@ export default function FilterControls() {
     }
 
     return (
-        <div>
+        <div className="space-y-6 bg-gray-800/50 p-5 rounded-xl border border-gray-700/50">
+            {/* Decade */}
             <div className="space-y-3">
-                {/* Popularity */}
+                <div className="flex justify-between items-center">
+                    <label className="text-gray-300 text-sm">From the...</label>
+                    <span className="text-purple-200 font-medium">{decade || "All"}</span>
+                </div>
+                <div className="flex flex-wrap items-center justify-center gap-2">
+                    {decades.map((d) => (
+                        <button
+                            key={d.value}
+                            onClick={() => setDecade(decade === d.value ? null : d.value)}
+                            className={`
+                    px-4 py-2 rounded-lg transition-all
+                    ${decade === d.value
+                                    ? "bg-[#00E054] text-black font-medium shadow-[0_0_10px_rgba(0,224,84,0.3)]"
+                                    : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                                }
+                `}
+                        >
+                            {d.label}
+                        </button>
+                    ))}
+                    {decade && (
+                        <button
+                            onClick={() => setDecade(null)}
+                            className="px-4 py-2 rounded-lg bg-gray-700 text-gray-300 hover:bg-gray-600"
+                        >
+                            Clear
+                        </button>
+                    )}
+                </div>
+            </div>
+            {/* Popularity */}
+            <div className="space-y-3">
                 <div className="flex justify-between items-center">
                     <label className="text-gray-300 text-sm">Popularity:</label>
                     <span className="text-purple-200 font-medium">{popularity}/5</span>
@@ -52,8 +94,8 @@ export default function FilterControls() {
                         >
                             <Star
                                 className={`h-8 w-8 ${star <= popularity
-                                        ? "fill-[#00E054] text-[#00E054]" // Letterboxd green
-                                        : "text-gray-600 stroke-[1.5]"
+                                    ? "fill-[#00E054] text-[#00E054]" // Letterboxd green
+                                    : "text-gray-600 stroke-[1.5]"
                                     }`}
                             />
                         </button>
