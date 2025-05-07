@@ -5,8 +5,10 @@ const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
 
 export async function GET(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
+    const { id } = await params;
+    
     if (!TMDB_ACCESS_TOKEN) {
         console.error('NEXT_PUBLIC_TMDB_API_KEY is not defined');
         return NextResponse.json(
@@ -16,8 +18,8 @@ export async function GET(
     }
 
     try {
-        const detailsUrl = `${TMDB_BASE_URL}/movie/${params.id}?append_to_response=credits,videos`;
-        console.log('Fetching details for movie:', params.id);
+        const detailsUrl = `${TMDB_BASE_URL}/movie/${id}?append_to_response=credits,videos`;
+        console.log('Fetching details for movie:', id);
         
         const detailsResponse = await fetch(detailsUrl, {
             headers: {
@@ -27,7 +29,7 @@ export async function GET(
         });
 
         if (!detailsResponse.ok) {
-            console.error(`Failed to fetch details for movie ${params.id}:`, {
+            console.error(`Failed to fetch details for movie ${id}:`, {
                 status: detailsResponse.status,
                 statusText: detailsResponse.statusText
             });

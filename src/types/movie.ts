@@ -1,27 +1,27 @@
 export interface Movie {
     id: number;
     title: string;
-    original_title: string;
-    overview: string;
-    poster_path: string;
-    backdrop_path: string;
+    poster_path: string | null;
     release_date: string;
-    runtime: number;
-    vote_average: number;
-    vote_count: number;
     genres: string[];
-    director: {
+    vote_average?: number;
+    runtime?: number;
+    overview?: string;
+    backdrop_path?: string | null;
+    original_title?: string;
+    vote_count?: number;
+    trailer?: {
+        key: string;
         name: string;
-        profile_path: string;
     } | null;
-    cast: Array<{
+    cast?: Array<{
         name: string;
         character: string;
         profile_path: string;
     }>;
-    trailer: {
-        key: string;
+    director?: {
         name: string;
+        profile_path: string;
     } | null;
 }
 

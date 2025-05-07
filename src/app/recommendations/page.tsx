@@ -6,20 +6,13 @@ import { Home, ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useEffect, useState } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
-
-interface Movie {
-    id: number;
-    title: string;
-    poster_path: string;
-    release_date: string;
-    vote_average: number;
-    genres: { id: number; name: string }[];
-    runtime: number;
-}
+import { Suspense } from 'react';
+import { MovieCard } from "@/components/movie-card";
+import { Movie } from "@/types/movie";
 
 const FALLBACK_POSTER = '/images/no-poster.svg';
 
-export default function Recommendations() {
+function RecommendationsContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const [movies, setMovies] = useState<Movie[]>([]);
@@ -137,39 +130,7 @@ export default function Recommendations() {
 
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-6 gap-4 w-full">
                             {movies.map((movie) => (
-                                <div key={movie.id} className="flex flex-col bg-gray-800 rounded-xl overflow-hidden shadow-lg shadow-black/50 hover:shadow-xl hover:shadow-black/60 transition-all hover:scale-[1.02] border border-white/5">
-                                    <div className="h-48 relative">
-                                        <Image 
-                                            src={movie.poster_path 
-                                                ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
-                                                : FALLBACK_POSTER
-                                            }
-                                            alt={movie.title}
-                                            fill
-                                            className="object-cover"
-                                            onError={(e) => {
-                                                const target = e.target as HTMLImageElement;
-                                                target.src = FALLBACK_POSTER;
-                                            }}
-                                        />
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 hover:opacity-100 transition-opacity flex items-end">
-                                            <div className="p-2 text-white">
-                                                <p className="font-bold text-sm">{new Date(movie.release_date).getFullYear()}</p>
-                                                <p className="text-xs">{movie.genres?.filter(Boolean).join(' • ')}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="p-3 flex-1 flex flex-col">
-                                        <h3 className="font-bold text-sm text-white line-clamp-2">{movie.title}</h3>
-                                        <div className="mt-auto pt-2">
-                                            <Link href={`/movie/${movie.id}`}>
-                                                <Button className="w-full bg-gradient-to-r from-pink-400 to-purple-500 hover:from-pink-500 hover:to-purple-600 text-sm py-1">
-                                                    Tingnan
-                                                </Button>
-                                            </Link>
-                                        </div>
-                                    </div>
-                                </div>
+                                <MovieCard key={movie.id} movie={movie} />
                             ))}
                         </div>
 
@@ -218,5 +179,13 @@ export default function Recommendations() {
                 </div>
             </div>
         </main>
+    );
+}
+
+export default function RecommendationsPage() {
+    return (
+        <Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading...</div>}>
+            <RecommendationsContent />
+        </Suspense>
     );
 }

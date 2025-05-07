@@ -8,6 +8,7 @@ import Link from "next/link";
 import Badge from "@/components/Badge";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
+import Image from "next/image";
 
 export default function MovieDetailsPage() {
     const params = useParams();
@@ -129,12 +130,12 @@ export default function MovieDetailsPage() {
                             <div className="flex items-center gap-2 mt-2 text-gray-300">
                                 <div className="flex items-center">
                                     <Star className="h-5 w-5 text-yellow-400 fill-yellow-400" />
-                                    <span className="ml-1 font-bold">{movie.vote_average.toFixed(1)}/10</span>
+                                    <span className="ml-1 font-bold">{movie.vote_average?.toFixed(1) ?? 'N/A'}/10</span>
                                 </div>
                                 <span className="text-gray-500">•</span>
                                 <span>{new Date(movie.release_date).getFullYear()}</span>
                                 <span className="text-gray-500">•</span>
-                                <span>{Math.floor(movie.runtime / 60)}h {movie.runtime % 60}m</span>
+                                <span>{movie.runtime ? `${movie.runtime} min` : 'N/A'}</span>
                             </div>
 
                             <div className="flex flex-wrap gap-2">
@@ -156,24 +157,43 @@ export default function MovieDetailsPage() {
                                 <div>
                                     <h2 className="text-xl font-bold text-purple-200 mb-2">Mga Artista</h2>
                                     <div className="grid grid-cols-2 gap-2">
-                                        {movie.cast.map((actor) => (
-                                            <div key={actor.name} className="flex items-center gap-2">
-                                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-pink-400 to-purple-500 flex items-center justify-center text-white font-bold">
-                                                    {actor.name.charAt(0)}
+                                        {movie.cast?.map((actor: { name: string; character: string; profile_path: string }) => (
+                                            <div key={actor.name} className="flex flex-col items-center">
+                                                <div className="w-16 h-16 rounded-full overflow-hidden relative">
+                                                    <Image
+                                                        src={actor.profile_path 
+                                                            ? `https://image.tmdb.org/t/p/w185${actor.profile_path}`
+                                                            : '/images/no-profile.svg'
+                                                        }
+                                                        alt={actor.name}
+                                                        fill
+                                                        className="object-cover"
+                                                    />
                                                 </div>
-                                                <div>
-                                                    <p className="font-medium text-sm text-white">{actor.name}</p>
-                                                    <p className="text-xs text-gray-400">{actor.character}</p>
-                                                </div>
+                                                <p className="text-sm font-medium mt-2 text-center">{actor.name}</p>
+                                                <p className="text-xs text-gray-400 text-center">{actor.character}</p>
                                             </div>
                                         ))}
                                     </div>
                                 </div>
 
                                 {movie.director && (
-                                    <div>
-                                        <h2 className="text-xl font-bold text-purple-200 mb-2">Director</h2>
-                                        <p>{movie.director.name}</p>
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-10 h-10 rounded-full overflow-hidden relative">
+                                            <Image
+                                                src={movie.director.profile_path 
+                                                    ? `https://image.tmdb.org/t/p/w185${movie.director.profile_path}`
+                                                    : '/images/no-profile.svg'
+                                                }
+                                                alt={movie.director.name}
+                                                fill
+                                                className="object-cover"
+                                            />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-medium">{movie.director.name}</p>
+                                            <p className="text-xs text-gray-400">Director</p>
+                                        </div>
                                     </div>
                                 )}
                             </div>
