@@ -2,7 +2,31 @@
 import { Smile, Frown, Meh, Heart, Zap, Coffee, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useRouter } from 'next/navigation';
-import { useState } from "react"
+import { useState, createContext, useContext } from "react"
+
+interface FilterContextType {
+    selectedEmotion: string | null;
+    setSelectedEmotion: (emotion: string | null) => void;
+    popularity: number | null;
+    setPopularity: (rating: number | null) => void;
+    duration: number[];
+    setDuration: (duration: number[]) => void;
+    decade: string | null;
+    setDecade: (decade: string | null) => void;
+}
+
+export const FilterContext = createContext<FilterContextType>({
+    selectedEmotion: null,
+    setSelectedEmotion: () => {},
+    popularity: null,
+    setPopularity: () => {},
+    duration: [],
+    setDuration: () => {},
+    decade: null,
+    setDecade: () => {}
+});
+
+export const useFilters = () => useContext(FilterContext);
 
 const emotions = [
     {
@@ -26,12 +50,10 @@ const emotions = [
 ]
 
 export default function EmotionSelector() {
-    const router = useRouter();
-    const [selectedEmotion, setSelectedEmotion] = useState<string | null>(null)
+    const { selectedEmotion, setSelectedEmotion } = useContext(FilterContext);
+    
     const handleEmotionSelect = (emotion: string) => {
-        setSelectedEmotion(emotion)
-        {/*remove nalang the comment para redirect reco*/}
-        // router.push('/recommendations');
+        setSelectedEmotion(emotion === selectedEmotion ? null : emotion);
     };
 
     return (
