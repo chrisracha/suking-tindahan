@@ -6,28 +6,28 @@ const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
 // Mapping Filipino emotions to TMDB genres and search parameters
 const emotionMappings: Record<string, { genres: number[], keywords: string[] }> = {
     'Masaya': {
-        genres: [35, 10751], // Comedy, Family
-        keywords: ['feel-good', 'heartwarming', 'funny']
+        genres: [35, 10751, 16, 14, 10770, 281585, 288816], // Comedy, Family, Animation, Fantasy, TV Movie, Inspirational, Light-hearted
+        keywords: ['feel-good', 'heartwarming', 'funny', 'uplifting', 'wholesome']
     },
     'Kinikilig': {
-        genres: [10749], // Just Romance genre
-        keywords: ['romance', 'love', 'romantic']
+        genres: [10749], // Romance
+        keywords: ['romance', 'love', 'romantic', 'sweet', 'heartwarming']
     },
     'Malungkot': {
-        genres: [18], // Just Drama genre
-        keywords: ['emotional', 'touching', 'dramatic', 'sad', 'melancholy']
+        genres: [18, 1647, 5609], // Drama, Sadness, Nostlagia
+        keywords: ['emotional', 'touching', 'dramatic', 'sad', 'melancholy', 'heartfelt', 'moving']
     },
     'Pagod': {
-        genres: [35, 16, 10751], // Comedy, Animation, Family
-        keywords: ['relaxing', 'light-hearted', 'feel-good', 'family-friendly']
+        genres: [35, 16, 10751, 14, 10770, 878, 12, 209897, 305015, 266370, 290395], // Comedy, Animation, Family, Fantasy, TV Movie, Sci-Fi, Adventure
+        keywords: ['relaxing', 'light-hearted', 'feel-good', 'family-friendly', 'uplifting', 'easy-watching']
     },
     'Bored': {
-        genres: [28, 12, 35, 53], // Action, Adventure, Comedy, Thriller
-        keywords: ['exciting', 'thrilling', 'action-packed', 'adventure']
+        genres: [28, 12, 35, 53, 80, 9648, 878, 14], // Action, Adventure, Comedy, Thriller, Crime, Mystery, Sci-Fi, Fantasy
+        keywords: ['exciting', 'thrilling', 'action-packed', 'adventure', 'suspense', 'engaging']
     },
     'Excited': {
-        genres: [28, 12, 878], // Action, Adventure, Science Fiction
-        keywords: ['action-packed', 'adventure', 'thrilling', 'exciting']
+        genres: [28, 12, 878, 53, 80, 9648, 14, 16], // Action, Adventure, Sci-Fi, Thriller, Crime, Mystery, Fantasy, Animation
+        keywords: ['action-packed', 'adventure', 'thrilling', 'exciting', 'intense', 'epic']
     }
 };
 
@@ -69,183 +69,61 @@ export async function GET(request: Request) {
     }
 
     try {
-        // First, get keyword IDs for the keywords
-        const keywordPromises = emotionMapping.keywords.map(async (keyword) => {
-            const keywordUrl = `${TMDB_BASE_URL}/search/keyword?query=${encodeURIComponent(keyword)}`;
-            console.log('Searching for keyword:', keyword);
-            
-            const keywordResponse = await fetch(keywordUrl, {
-                headers: {
-                    'Authorization': `Bearer ${TMDB_ACCESS_TOKEN}`,
-                    'accept': 'application/json'
-                }
-            });
-
-            if (!keywordResponse.ok) {
-                console.error(`Failed to fetch keyword ${keyword}:`, keywordResponse.statusText);
-                return null;
-            }
-
-            const keywordData = await keywordResponse.json();
-            console.log(`Keyword search results for "${keyword}":`, keywordData.results);
-            return keywordData.results[0]?.id;
-        });
-
-        const keywordIds = (await Promise.all(keywordPromises)).filter(id => id !== null);
-        console.log('Found keyword IDs:', keywordIds);
-
-        // Discover movies based on genres
+        // Create base discover URL with Philippine-only requirement
         const discoverUrl = new URL(`${TMDB_BASE_URL}/discover/movie`);
-        discoverUrl.searchParams.append('language', 'en-US');
         discoverUrl.searchParams.append('region', 'PH');
         discoverUrl.searchParams.append('sort_by', 'popularity.desc');
         discoverUrl.searchParams.append('include_adult', 'false');
+        discoverUrl.searchParams.append('with_origin_country', 'PH');
+        discoverUrl.searchParams.append('with_genres', emotionMapping.genres.join('|')); // Use pipe for OR logic
+        discoverUrl.searchParams.append('page', page);
         discoverUrl.searchParams.append('certification_country', 'PH');
         discoverUrl.searchParams.append('certification.lte', 'PG');
-        discoverUrl.searchParams.append('with_genres', emotionMapping.genres.join(','));
-        discoverUrl.searchParams.append('page', page);
-        discoverUrl.searchParams.append('with_origin_country', 'PH');
 
-        // For specific emotions, try a different approach
-        if (emotion === 'Kinikilig' || emotion === 'Excited' || emotion === 'Pagod' || emotion === 'Bored' || emotion === 'Malungkot') {
-            // First try with original genres
-            const initialResponse = await fetch(discoverUrl.toString(), {
-                headers: {
-                    'Authorization': `Bearer ${TMDB_ACCESS_TOKEN}`,
-                    'accept': 'application/json'
-                }
-            });
-
-            if (initialResponse.ok) {
-                const initialData = await initialResponse.json();
-                if (initialData.total_results > 0) {
-                    return processAndReturnResults(initialData, page);
-                }
-            }
-
-            // If not enough results, try with expanded genres
-            let expandedGenres = emotionMapping.genres;
-            if (emotion === 'Excited') {
-                expandedGenres = [28, 12, 878, 53, 80]; // Action, Adventure, Sci-Fi, Thriller, Crime
-            } else if (emotion === 'Pagod') {
-                expandedGenres = [35, 16, 10751, 14, 10770]; // Comedy, Animation, Family, Fantasy, TV Movie
-            } else if (emotion === 'Bored') {
-                expandedGenres = [28, 12, 35, 53, 80, 9648]; // Action, Adventure, Comedy, Thriller, Crime, Mystery
-            } else if (emotion === 'Malungkot') {
-                expandedGenres = [18, 9648, 53]; // Drama, Mystery, Thriller
-            }
-
-            discoverUrl.searchParams.set('with_genres', expandedGenres.join(','));
-            const expandedResponse = await fetch(discoverUrl.toString(), {
-                headers: {
-                    'Authorization': `Bearer ${TMDB_ACCESS_TOKEN}`,
-                    'accept': 'application/json'
-                }
-            });
-
-            if (expandedResponse.ok) {
-                const expandedData = await expandedResponse.json();
-                if (expandedData.total_results > 0) {
-                    return processAndReturnResults(expandedData, page);
-                }
-            }
-
-            // If still not enough, try without origin country restriction but keep strict filters
-            discoverUrl.searchParams.delete('with_origin_country');
-            const globalResponse = await fetch(discoverUrl.toString(), {
-                headers: {
-                    'Authorization': `Bearer ${TMDB_ACCESS_TOKEN}`,
-                    'accept': 'application/json'
-                }
-            });
-
-            if (globalResponse.ok) {
-                const globalData = await globalResponse.json();
-                if (globalData.total_results > 0) {
-                    return processAndReturnResults(globalData, page);
-                }
+        // Add popularity filter if specified
+        if (popularity) {
+            const popularityValue = parseInt(popularity);
+            if (!isNaN(popularityValue) && popularityValue > 0) {
+                // Convert 1-5 scale to TMDB's 0-10 scale
+                const tmdbRating = (popularityValue * 2).toString();
+                discoverUrl.searchParams.append('vote_average.gte', tmdbRating);
             }
         }
 
-        // Add popularity filter with more flexible ranges
-        if (popularity && popularity !== '0') {
-            const rating = parseInt(popularity);
-            const ratingRanges = {
-                1: { min: 0, max: 6 },     // 0-6 stars
-                2: { min: 0, max: 7 },     // 0-7 stars
-                3: { min: 0, max: 8 },     // 0-8 stars
-                4: { min: 0, max: 9 },     // 0-9 stars
-                5: { min: 0, max: 10 }     // 0-10 stars
-            };
-            
-            const range = ratingRanges[rating as keyof typeof ratingRanges];
-            if (range) {
-                discoverUrl.searchParams.append('vote_average.lte', range.max.toString());
-                console.log('Setting vote average range:', range);
+        // Add decade filter if specified
+        if (decades && decades.length > 0) {
+            const yearRanges = decades.map(decade => {
+                switch (decade) {
+                    case '80s': return { start: 1980, end: 1989 };
+                    case '90s': return { start: 1990, end: 1999 };
+                    case '00s': return { start: 2000, end: 2009 };
+                    case '10s': return { start: 2010, end: 2019 };
+                    case '20s': return { start: 2020, end: 2029 };
+                    default: return null;
+                }
+            }).filter(range => range !== null);
+
+            if (yearRanges.length > 0) {
+                discoverUrl.searchParams.append('primary_release_date.gte', yearRanges[0]?.start.toString() || '');
+                discoverUrl.searchParams.append('primary_release_date.lte', yearRanges[yearRanges.length - 1]?.end.toString() || '');
             }
         }
 
-        // Add duration filter with more flexibility
+        // Add duration filter if specified
         if (duration) {
             try {
-                const [maxDuration] = JSON.parse(duration);
-                // Add more flexibility to duration (±45 minutes)
-                const minDuration = Math.max(10, maxDuration - 45);
-                const maxDurationFlexible = maxDuration + 45;
-                
-                discoverUrl.searchParams.append('with_runtime.gte', minDuration.toString());
-                discoverUrl.searchParams.append('with_runtime.lte', maxDurationFlexible.toString());
-                console.log('Setting duration range:', { minDuration, maxDurationFlexible });
+                const durationRange = JSON.parse(duration);
+                if (Array.isArray(durationRange) && durationRange.length > 0) {
+                    discoverUrl.searchParams.append('with_runtime.gte', durationRange[0].toString());
+                    if (durationRange.length > 1) {
+                        discoverUrl.searchParams.append('with_runtime.lte', durationRange[1].toString());
+                    }
+                }
             } catch (e) {
                 console.error('Invalid duration format:', duration);
             }
         }
 
-        // Add decade filters with more flexibility
-        if (decades.length > 0) {
-            const validDecades = decades.filter(decade => decadeRanges[decade]);
-            if (validDecades.length > 0) {
-                const yearRanges = validDecades.map(decade => decadeRanges[decade]);
-                const startYear = Math.min(...yearRanges.map(range => range.start));
-                const endYear = Math.max(...yearRanges.map(range => range.end));
-                
-                // Add more flexibility to year range (±5 years)
-                const flexibleStartYear = Math.max(1900, startYear - 5);
-                const flexibleEndYear = Math.min(2024, endYear + 5);
-                
-                discoverUrl.searchParams.append('primary_release_date.gte', `${flexibleStartYear}-01-01`);
-                discoverUrl.searchParams.append('primary_release_date.lte', `${flexibleEndYear}-12-31`);
-                console.log('Setting year range:', { flexibleStartYear, flexibleEndYear });
-            }
-        }
-
-        // Try with keywords first
-        if (keywordIds.length > 0) {
-            console.log('Trying discover with keywords first...');
-            discoverUrl.searchParams.append('with_keywords', keywordIds.join('|'));
-            
-            const keywordResponse = await fetch(discoverUrl.toString(), {
-                headers: {
-                    'Authorization': `Bearer ${TMDB_ACCESS_TOKEN}`,
-                    'accept': 'application/json'
-                }
-            });
-
-            if (keywordResponse.ok) {
-                const keywordData = await keywordResponse.json();
-                console.log(`Found ${keywordData.total_results} results with keywords`);
-                
-                if (keywordData.total_results > 0) {
-                    return processAndReturnResults(keywordData, page);
-                }
-            }
-        }
-
-        // If no results with keywords, try without them
-        console.log('Not enough results with keywords, trying without...');
-        discoverUrl.searchParams.delete('with_keywords');
-
-        // Try with original filters
         const response = await fetch(discoverUrl.toString(), {
             headers: {
                 'Authorization': `Bearer ${TMDB_ACCESS_TOKEN}`,
@@ -253,56 +131,90 @@ export async function GET(request: Request) {
             }
         });
 
-        let responseData;
-        try {
-            responseData = await response.json();
-        } catch (error) {
-            console.error('Error parsing response:', error);
+        if (!response.ok) {
+            console.error('Failed to fetch movies:', response.statusText);
             return NextResponse.json(
-                { error: 'Failed to parse response from TMDB' },
-                { status: 500 }
+                { error: 'Failed to fetch movies' },
+                { status: response.status }
             );
         }
 
-        if (!response.ok || responseData.total_results === 0) {
-            // If no results, try with minimal filters
-            console.log('No results found, trying with minimal filters...');
-            
-            const minimalUrl = new URL(`${TMDB_BASE_URL}/discover/movie`);
-            minimalUrl.searchParams.append('language', 'en-US');
-            minimalUrl.searchParams.append('region', 'PH');
-            minimalUrl.searchParams.append('sort_by', 'popularity.desc');
-            minimalUrl.searchParams.append('include_adult', 'false');
-            minimalUrl.searchParams.append('certification_country', 'PH');
-            minimalUrl.searchParams.append('certification.lte', 'PG');
-            minimalUrl.searchParams.append('with_genres', emotionMapping.genres.join(','));
-            minimalUrl.searchParams.append('page', page);
+        const data = await response.json();
+        
+        // Process the results with details
+        const processedResults = await Promise.all(
+            data.results.map(async (movie: any) => {
+                const detailsUrl = `${TMDB_BASE_URL}/movie/${movie.id}?append_to_response=credits,videos`;
+                console.log('Fetching details for movie:', movie.title);
+                
+                const detailsResponse = await fetch(detailsUrl, {
+                    headers: {
+                        'Authorization': `Bearer ${TMDB_ACCESS_TOKEN}`,
+                        'accept': 'application/json'
+                    }
+                });
 
-            const minimalResponse = await fetch(minimalUrl.toString(), {
-                headers: {
-                    'Authorization': `Bearer ${TMDB_ACCESS_TOKEN}`,
-                    'accept': 'application/json'
+                if (!detailsResponse.ok) {
+                    console.error(`Failed to fetch details for movie ${movie.id}:`, {
+                        status: detailsResponse.status,
+                        statusText: detailsResponse.statusText
+                    });
+                    return null;
                 }
-            });
 
-            if (minimalResponse.ok) {
-                const minimalData = await minimalResponse.json();
-                if (minimalData.total_results > 0) {
-                    console.log(`Found ${minimalData.total_results} results with minimal filters`);
-                    return processAndReturnResults(minimalData, page);
-                }
-            }
+                const details = await detailsResponse.json();
+                
+                // Get director and cast
+                const director = details.credits?.crew?.find((person: any) => person.job === 'Director');
+                const cast = details.credits?.cast?.slice(0, 6) || [];
+                
+                // Get trailer
+                const trailer = details.videos?.results?.find((video: any) => 
+                    video.type === 'Trailer' && video.site === 'YouTube'
+                );
 
-            // If still no results, return empty results instead of error
-            return NextResponse.json({
-                results: [],
-                total_results: 0,
-                total_pages: 0,
-                current_page: parseInt(page)
-            });
-        }
+                return {
+                    id: movie.id,
+                    title: movie.title,
+                    original_title: movie.original_title,
+                    overview: movie.overview,
+                    poster_path: movie.poster_path,
+                    backdrop_path: movie.backdrop_path,
+                    release_date: movie.release_date,
+                    runtime: movie.runtime,
+                    vote_average: movie.vote_average,
+                    vote_count: movie.vote_count,
+                    genres: details.genres?.map((g: any) => g.name) || [],
+                    director: director ? {
+                        name: director.name,
+                        profile_path: director.profile_path
+                    } : null,
+                    cast: cast.map((actor: any) => ({
+                        name: actor.name,
+                        character: actor.character,
+                        profile_path: actor.profile_path
+                    })),
+                    trailer: trailer ? {
+                        key: trailer.key,
+                        name: trailer.name
+                    } : null
+                };
+            })
+        );
 
-        return processAndReturnResults(responseData, page);
+        // Filter out any null results
+        const validMovies = processedResults.filter(movie => movie !== null);
+
+        // Limit to 6 results per page
+        const limitedResults = validMovies.slice(0, 6);
+
+        return NextResponse.json({
+            results: limitedResults,
+            total_results: data.total_results,
+            total_pages: Math.ceil(data.total_results / 6), // Adjust total pages based on 6 items per page
+            current_page: parseInt(page)
+        });
+
     } catch (error) {
         console.error('Error fetching recommendations:', error);
         return NextResponse.json(
@@ -316,77 +228,4 @@ export async function GET(request: Request) {
             { status: 500 }
         );
     }
-}
-
-// Helper function to process and return results
-async function processAndReturnResults(data: any, page: string) {
-    const moviesWithDetails = await Promise.all(
-        data.results.slice(0, 20).map(async (movie: any) => {
-            const detailsUrl = `${TMDB_BASE_URL}/movie/${movie.id}?append_to_response=credits,videos`;
-            console.log('Fetching details for movie:', movie.title);
-            
-            const detailsResponse = await fetch(detailsUrl, {
-                headers: {
-                    'Authorization': `Bearer ${TMDB_ACCESS_TOKEN}`,
-                    'accept': 'application/json'
-                }
-            });
-
-            if (!detailsResponse.ok) {
-                console.error(`Failed to fetch details for movie ${movie.id}:`, {
-                    status: detailsResponse.status,
-                    statusText: detailsResponse.statusText
-                });
-                return null;
-            }
-
-            const details = await detailsResponse.json();
-            
-            // Get director and cast
-            const director = details.credits?.crew?.find((person: any) => person.job === 'Director');
-            const cast = details.credits?.cast?.slice(0, 6) || [];
-            
-            // Get trailer
-            const trailer = details.videos?.results?.find((video: any) => 
-                video.type === 'Trailer' && video.site === 'YouTube'
-            );
-
-            return {
-                id: movie.id,
-                title: movie.title,
-                original_title: movie.original_title,
-                overview: movie.overview,
-                poster_path: movie.poster_path,
-                backdrop_path: movie.backdrop_path,
-                release_date: movie.release_date,
-                runtime: movie.runtime,
-                vote_average: movie.vote_average,
-                vote_count: movie.vote_count,
-                genres: details.genres?.map((g: any) => g.name) || [],
-                director: director ? {
-                    name: director.name,
-                    profile_path: director.profile_path
-                } : null,
-                cast: cast.map((actor: any) => ({
-                    name: actor.name,
-                    character: actor.character,
-                    profile_path: actor.profile_path
-                })),
-                trailer: trailer ? {
-                    key: trailer.key,
-                    name: trailer.name
-                } : null
-            };
-        })
-    );
-
-    // Filter out any null results
-    const validMovies = moviesWithDetails.filter(movie => movie !== null);
-
-    return NextResponse.json({
-        results: validMovies,
-        total_results: data.total_results,
-        total_pages: Math.ceil(data.total_results / 20),
-        current_page: parseInt(page)
-    });
 } 

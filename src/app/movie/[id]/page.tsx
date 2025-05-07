@@ -80,18 +80,20 @@ export default function MovieDetailsPage() {
             <div className="w-full max-w-4xl mx-auto">
                 {/* Back Button */}
                 <div className="p-4">
-                    <Button
-                        variant="outline"
-                        onClick={() => {
-                            // Preserve search parameters when going back
-                            const params = new URLSearchParams(searchParams.toString());
-                            router.push(`/recommendations?${params.toString()}`);
-                        }}
-                        className="border-gray-600 bg-black text-gray-300 hover:bg-gray-800 hover:text-white"
+                    <Link 
+                        href={searchParams.get('query') 
+                            ? `/search?query=${encodeURIComponent(searchParams.get('query')!)}`
+                            : '/recommendations'
+                        }
                     >
-                        <ChevronLeft className="mr-2 h-4 w-4" />
-                        Bumalik sa Mga Rekomendasyon
-                    </Button>
+                        <Button
+                            variant="outline"
+                            className="border-gray-600 bg-black text-gray-300 hover:bg-gray-800 hover:text-white"
+                        >
+                            <ChevronLeft className="mr-2 h-4 w-4" />
+                            Bumalik
+                        </Button>
+                    </Link>
                 </div>
 
                 {/* Movie Details */}
@@ -168,6 +170,10 @@ export default function MovieDetailsPage() {
                                                         alt={actor.name}
                                                         fill
                                                         className="object-cover"
+                                                        onError={(e) => {
+                                                            const target = e.target as HTMLImageElement;
+                                                            target.src = '/images/no-profile.svg';
+                                                        }}
                                                     />
                                                 </div>
                                                 <p className="text-sm font-medium mt-2 text-center">{actor.name}</p>
@@ -188,6 +194,10 @@ export default function MovieDetailsPage() {
                                                 alt={movie.director.name}
                                                 fill
                                                 className="object-cover"
+                                                onError={(e) => {
+                                                    const target = e.target as HTMLImageElement;
+                                                    target.src = '/images/no-profile.svg';
+                                                }}
                                             />
                                         </div>
                                         <div>

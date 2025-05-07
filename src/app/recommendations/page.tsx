@@ -9,6 +9,7 @@ import { useSearchParams, useRouter } from "next/navigation"
 import { Suspense } from 'react';
 import { MovieCard } from "@/components/movie-card";
 import { Movie } from "@/types/movie";
+import { Loader2 } from "lucide-react";
 
 const FALLBACK_POSTER = '/images/no-poster.svg';
 
@@ -49,6 +50,7 @@ function RecommendationsContent() {
                 const data = await response.json();
                 setMovies(data.results);
                 setTotalPages(data.total_pages);
+                console.log(`[Recommendations] Emotion: ${emotion}, Results: ${data.results.length}, Total Pages: ${data.total_pages}`);
             } catch (err) {
                 setError(err instanceof Error ? err.message : 'An error occurred');
             } finally {
@@ -79,6 +81,7 @@ function RecommendationsContent() {
             setMovies(data.results);
             setTotalPages(data.total_pages);
             setCurrentPage(data.current_page);
+            console.log(`[Recommendations] Page ${newPage}, Results: ${data.results.length}, Total Pages: ${data.total_pages}`);
         } catch (err) {
             console.error('Error fetching recommendations:', err);
             setError(err instanceof Error ? err.message : 'Failed to fetch recommendations');
@@ -103,7 +106,7 @@ function RecommendationsContent() {
     if (loading) {
         return (
             <main className="min-h-screen flex flex-col items-center justify-center p-4 bg-black">
-                <div className="text-white text-xl">Loading...</div>
+                <Loader2 className="h-8 w-8 animate-spin text-[#00E054]" />
             </main>
         );
     }
@@ -128,8 +131,8 @@ function RecommendationsContent() {
                             Mga pelikulang para sa'yo! • Rating: {popularityText}
                         </p>
 
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-6 gap-4 w-full">
-                            {movies.map((movie) => (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 w-full">
+                            {[...movies].sort(() => Math.random() - 0.5).map((movie) => (
                                 <MovieCard key={movie.id} movie={movie} />
                             ))}
                         </div>
@@ -184,7 +187,11 @@ function RecommendationsContent() {
 
 export default function RecommendationsPage() {
     return (
-        <Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading...</div>}>
+        <Suspense fallback={
+            <div className="flex justify-center items-center min-h-screen bg-black">
+                <Loader2 className="h-8 w-8 animate-spin text-[#00E054]" />
+            </div>
+        }>
             <RecommendationsContent />
         </Suspense>
     );
