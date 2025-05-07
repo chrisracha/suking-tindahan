@@ -1,10 +1,10 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 const TMDB_ACCESS_TOKEN = process.env.NEXT_PUBLIC_TMDB_API_KEY;
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
 
 export async function GET(
-    request: Request,
+    request: NextRequest,
     { params }: { params: { id: string } }
 ) {
     if (!TMDB_ACCESS_TOKEN) {
@@ -17,7 +17,7 @@ export async function GET(
 
     try {
         const detailsUrl = `${TMDB_BASE_URL}/movie/${params.id}?append_to_response=credits,videos`;
-        console.log('Fetching details for movie ID:', params.id);
+        console.log('Fetching details for movie:', params.id);
         
         const detailsResponse = await fetch(detailsUrl, {
             headers: {
@@ -27,7 +27,7 @@ export async function GET(
         });
 
         if (!detailsResponse.ok) {
-            console.error(`Failed to fetch movie details:`, {
+            console.error(`Failed to fetch details for movie ${params.id}:`, {
                 status: detailsResponse.status,
                 statusText: detailsResponse.statusText
             });
@@ -41,15 +41,14 @@ export async function GET(
         
         // Get director and cast
         const director = details.credits?.crew?.find((person: any) => person.job === 'Director');
-        const cast = details.credits?.cast?.slice(0, 6) || []; // Get first 6 cast members
+        const cast = details.credits?.cast?.slice(0, 6) || [];
         
         // Get trailer
         const trailer = details.videos?.results?.find((video: any) => 
             video.type === 'Trailer' && video.site === 'YouTube'
         );
 
-        // Format the response to match our template
-        const movie = {
+        return NextResponse.json({
             id: details.id,
             title: details.title,
             original_title: details.original_title,
@@ -60,7 +59,7 @@ export async function GET(
             runtime: details.runtime,
             vote_average: details.vote_average,
             vote_count: details.vote_count,
-            genres: details.genres?.map((g: any) => g.name) || [], // Use genre names instead of IDs
+            genres: details.genres?.map((g: any) => g.name) || [],
             director: director ? {
                 name: director.name,
                 profile_path: director.profile_path
@@ -74,13 +73,11 @@ export async function GET(
                 key: trailer.key,
                 name: trailer.name
             } : null
-        };
-
-        return NextResponse.json(movie);
+        });
     } catch (error) {
         console.error('Error fetching movie details:', error);
         return NextResponse.json(
-            { error: error instanceof Error ? error.message : 'Failed to fetch movie details' },
+            { error: 'Failed to fetch movie details' },
             { status: 500 }
         );
     }
