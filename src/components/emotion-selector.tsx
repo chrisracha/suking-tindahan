@@ -1,5 +1,5 @@
 "use client"
-import { Smile, Frown, Meh, Heart, Zap, Coffee, Check } from "lucide-react"
+import { Smile, Frown, Meh, Heart, Zap, Coffee } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useRouter } from 'next/navigation';
 import { useState, createContext, useContext } from "react"
@@ -79,15 +79,6 @@ export default function EmotionSelector() {
                         `}
                         variant="ghost"
                     >
-                        {/* Check icon on hover or when selected */}
-                        <div className={`
-                            absolute top-2 right-2 bg-[#00E054] rounded-full p-0.5 
-                            transition-opacity duration-200
-                            ${isSelected ? "opacity-100" : "opacity-0 group-hover:opacity-100"}
-                        `}>
-                            <Check className="h-3 w-3 text-black" />
-                        </div>
-
                         <emotion.icon className={`h-8 w-8 mb-2 ${isSelected ? "text-current animate-pulse" : "group-hover:text-current"}`} />
                         <span className={isSelected ? "font-bold" : "group-hover:font-bold"}>{emotion.name}</span>
                     </Button>

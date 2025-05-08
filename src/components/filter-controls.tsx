@@ -1,15 +1,16 @@
 "use client"
 
-import * as Slider from "@radix-ui/react-slider";
+import { useState, useEffect } from "react"
+import * as Slider from "@radix-ui/react-slider"
+import { useRouter } from "next/navigation"
 import { Star } from "lucide-react"
 import { useFilters } from "./emotion-selector"
-import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { useContext, useEffect } from "react"
+import { useContext } from "react"
 import { FilterContext } from "./emotion-selector"
 
 export default function FilterControls() {
-    const router = useRouter();
+    const router = useRouter()
     const { 
         selectedEmotion, 
         popularity, 
@@ -18,7 +19,7 @@ export default function FilterControls() {
         setDuration, 
         decade, 
         setDecade 
-    } = useFilters();
+    } = useFilters()
 
     // Decade options
     const decades = [
