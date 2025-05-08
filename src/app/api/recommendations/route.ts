@@ -78,14 +78,6 @@ export async function GET(request: Request) {
         
         // Strictly use only the genres for the selected emotion
         discoverUrl.searchParams.append('with_genres', emotionMapping.genres.join('|'));
-        
-        // Add keywords for better emotion matching
-        // if (emotionMapping.keywords.length > 0) {
-        //     discoverUrl.searchParams.append('with_keywords', emotionMapping.keywords.join(','));
-        // }
-        
-        // Set page size to 6 and use TMDB's pagination
-        discoverUrl.searchParams.append('page', page);
         discoverUrl.searchParams.append('certification_country', 'PH');
         discoverUrl.searchParams.append('certification.lte', 'PG');
 
@@ -93,32 +85,25 @@ export async function GET(request: Request) {
         if (popularity) {
             const popularityValue = parseInt(popularity);
             if (!isNaN(popularityValue) && popularityValue > 0) {
-                // Convert 1-5 scale to TMDB's 0-10 scale
                 let tmdbRating;
                 switch (popularityValue) {
-                    case 1: tmdbRating = '2.0'; break;  // 1-2 rating
-                    case 2: tmdbRating = '4.0'; break;  // 3-4 rating
-                    case 3: tmdbRating = '6.0'; break;  // 5-6 rating
-                    case 4: tmdbRating = '8.0'; break;  // 7-8 rating
-                    case 5: tmdbRating = '9.0'; break;  // 9-10 rating
+                    case 1: tmdbRating = '2.0'; break;
+                    case 2: tmdbRating = '4.0'; break;
+                    case 3: tmdbRating = '6.0'; break;
+                    case 4: tmdbRating = '8.0'; break;
+                    case 5: tmdbRating = '8.5'; break;
                     default: tmdbRating = '0.0';
                 }
                 discoverUrl.searchParams.append('vote_average.gte', tmdbRating);
-                // Require more votes for higher ratings to ensure accuracy
-                const minVotes = Math.max(50, popularityValue * 20);
-                discoverUrl.searchParams.append('vote_count.gte', minVotes.toString());
             }
         }
 
         // Add decade filter if specified
         if (decades && decades.length > 0) {
             const yearRanges = decades.map(decade => decadeRanges[decade]).filter(range => range !== null);
-            
             if (yearRanges.length > 0) {
-                // Use exact year ranges from the mapping
                 const startYear = yearRanges[0]?.start;
                 const endYear = yearRanges[yearRanges.length - 1]?.end;
-                
                 if (startYear && endYear) {
                     discoverUrl.searchParams.append('primary_release_date.gte', `${startYear}-01-01`);
                     discoverUrl.searchParams.append('primary_release_date.lte', `${endYear}-12-31`);
@@ -131,26 +116,24 @@ export async function GET(request: Request) {
             try {
                 const durationRange = JSON.parse(duration);
                 if (Array.isArray(durationRange) && durationRange.length === 2) {
-                    // Use exact duration range from user input
                     const [minDuration, maxDuration] = durationRange;
-                    
-                    // Add a small buffer to ensure we get movies within the range
-                    const buffer = 5; // 5 minutes buffer
+                    const buffer = 5;
                     discoverUrl.searchParams.append('with_runtime.gte', (minDuration - buffer).toString());
                     discoverUrl.searchParams.append('with_runtime.lte', (maxDuration + buffer).toString());
-                    
-                    // Add a minimum runtime to filter out very short videos
                     discoverUrl.searchParams.append('with_runtime.gte', '10');
-                    
-                    console.log(`Duration filter: ${minDuration}-${maxDuration} minutes`);
                 }
             } catch (e) {
                 console.error('Invalid duration format:', duration);
             }
         }
 
-        console.log('TMDB API URL:', discoverUrl.toString());
+        // Calculate TMDB page number based on our desired page size of 6
+        const moviesPerPage = 6;
+        const tmdbPageSize = 20; // TMDB's default page size
+        const tmdbPage = Math.ceil((parseInt(page) * moviesPerPage) / tmdbPageSize);
+        discoverUrl.searchParams.append('page', tmdbPage.toString());
 
+        // Fetch movies from TMDB
         const response = await fetch(discoverUrl.toString(), {
             headers: {
                 'Authorization': `Bearer ${TMDB_ACCESS_TOKEN}`,
@@ -159,24 +142,12 @@ export async function GET(request: Request) {
         });
 
         if (!response.ok) {
-            console.error('Failed to fetch movies:', response.statusText);
-            return NextResponse.json(
-                { error: 'Failed to fetch movies' },
-                { status: response.status }
-            );
+            throw new Error('Failed to fetch movies');
         }
 
         const data = await response.json();
-        console.log('TMDB API Response:', {
-            total_results: data.total_results,
-            total_pages: data.total_pages,
-            page: data.page,
-            results_count: data.results.length
-        });
-
-        // If TMDB returned no results, return empty response
+        
         if (!data.results || data.results.length === 0) {
-            console.log('No results from TMDB API');
             return NextResponse.json({
                 results: [],
                 total_results: 0,
@@ -184,13 +155,16 @@ export async function GET(request: Request) {
                 current_page: parseInt(page)
             });
         }
-        
-        // Process the results with details
+
+        // Calculate which movies we need from the TMDB page
+        const startIndex = ((parseInt(page) - 1) * moviesPerPage) % tmdbPageSize;
+        const endIndex = Math.min(startIndex + moviesPerPage, data.results.length);
+        const pageMovies = data.results.slice(startIndex, endIndex);
+
+        // Process only the movies we need
         const processedResults = await Promise.all(
-            data.results.map(async (movie: any) => {
+            pageMovies.map(async (movie: any) => {
                 const detailsUrl = `${TMDB_BASE_URL}/movie/${movie.id}?append_to_response=credits,videos`;
-                console.log('Fetching details for movie:', movie.title);
-                
                 const detailsResponse = await fetch(detailsUrl, {
                     headers: {
                         'Authorization': `Bearer ${TMDB_ACCESS_TOKEN}`,
@@ -199,20 +173,13 @@ export async function GET(request: Request) {
                 });
 
                 if (!detailsResponse.ok) {
-                    console.error(`Failed to fetch details for movie ${movie.id}:`, {
-                        status: detailsResponse.status,
-                        statusText: detailsResponse.statusText
-                    });
+                    console.error(`Failed to fetch details for movie ${movie.id}`);
                     return null;
                 }
 
                 const details = await detailsResponse.json();
-                
-                // Get director and cast
                 const director = details.credits?.crew?.find((person: any) => person.job === 'Director');
                 const cast = details.credits?.cast?.slice(0, 6) || [];
-                
-                // Get trailer
                 const trailer = details.videos?.results?.find((video: any) => 
                     video.type === 'Trailer' && video.site === 'YouTube'
                 );
@@ -246,39 +213,15 @@ export async function GET(request: Request) {
             })
         );
 
-        // Filter out any null results
+        // Filter out null results
         const validMovies = processedResults.filter(movie => movie !== null);
-        console.log('Processed Results:', {
-            total_processed: processedResults.length,
-            valid_movies: validMovies.length,
-            page: page
-        });
 
         // Calculate total pages based on TMDB's total results
         const totalResults = data.total_results;
-        const totalPages = Math.min(Math.ceil(totalResults / 20), 500); // TMDB uses 20 items per page
-        console.log('Pagination Info:', {
-            total_results: totalResults,
-            total_pages: totalPages,
-            current_page: parseInt(page)
-        });
-
-        // If we have no valid movies, return empty results
-        if (validMovies.length === 0) {
-            console.log('No valid movies found for page:', page);
-            return NextResponse.json({
-                results: [],
-                total_results: totalResults,
-                total_pages: totalPages,
-                current_page: parseInt(page)
-            });
-        }
-
-        // Limit to 6 results per page
-        const paginatedResults = validMovies.slice(0, 6);
+        const totalPages = Math.min(Math.ceil(totalResults / moviesPerPage), 500);
 
         return NextResponse.json({
-            results: paginatedResults,
+            results: validMovies,
             total_results: totalResults,
             total_pages: totalPages,
             current_page: parseInt(page)

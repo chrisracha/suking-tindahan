@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import Image from "next/image";
-import { Home, ChevronLeft, ChevronRight } from "lucide-react"
+import { Home, ChevronLeft, ChevronRight, Shuffle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useEffect, useState } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
@@ -124,6 +124,11 @@ function RecommendationsContent() {
         }
     };
 
+    const handleShuffle = () => {
+        const randomPage = Math.floor(Math.random() * totalPages) + 1;
+        handlePageChange(randomPage);
+    };
+
     const getEmotionPrefix = (emotion: string | null) => {
         if (!emotion) return "Kung ano";
         switch (emotion) {
@@ -184,8 +189,43 @@ function RecommendationsContent() {
 
     if (error) {
         return (
-            <main className="min-h-screen flex flex-col items-center justify-center p-4 bg-black">
-                <div className="text-red-500 text-xl">{error}</div>
+            <main className="min-h-screen flex flex-col bg-black p-4">
+                <div className="w-full max-w-6xl mx-auto">
+                    <div className="p-6 md:p-8 rounded-3xl bg-gradient-to-br from-gray-900 to-gray-950 shadow-[0_0_15px_rgba(255,255,255,0.1)]">
+                        <div className="flex flex-col items-center">
+                            <h2 className="text-3xl md:text-4xl font-bold leading-normal text-center bg-gradient-to-r from-pink-200 via-purple-200 to-indigo-200 text-transparent bg-clip-text mb-4">
+                                Walang nahanap na pelikula
+                            </h2>
+                            <p className="text-gray-400 text-center mb-8">
+                                Subukan mong baguhin ang iyong mga filter o bumalik sa simula.
+                            </p>
+                            <div className="flex gap-4">
+                                <Link href="/">
+                                    <Button
+                                        variant="outline"
+                                        className="border-gray-600 bg-black text-gray-300 hover:bg-gray-800 hover:text-white"
+                                    >
+                                        <Home className="mr-2 h-4 w-4" />
+                                        Bumalik sa Simula
+                                    </Button>
+                                </Link>
+                                <Button
+                                    variant="outline"
+                                    onClick={() => router.back()}
+                                    className="border-gray-600 bg-black text-gray-300 hover:bg-gray-800 hover:text-white"
+                                >
+                                    <ChevronLeft className="mr-2 h-4 w-4" />
+                                    Bumalik
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Footer */}
+                    <div className="p-3 text-center mt-4">
+                        <p className="text-gray-400 text-sm">© 2025 Suking Tindahan | DSS</p>
+                    </div>
+                </div>
             </main>
         );
     }
@@ -199,7 +239,7 @@ function RecommendationsContent() {
                             {getEmotionPrefix(selectedEmotion)} ka ngayon,
                         </h2>
                         <p className="text-white mb-8 text-center italic">
-                            ito ang mga pelikulang para sa'yo! • Rating: {popularityText}
+                            ito ang mga pelikulang para sa'yo!
                         </p>
 
                         {loading ? (
@@ -248,6 +288,15 @@ function RecommendationsContent() {
                                         >
                                             Next
                                             <ChevronRight className="h-4 w-4" />
+                                        </Button>
+                                        <Button
+                                            variant="outline"
+                                            onClick={handleShuffle}
+                                            disabled={loading}
+                                            className="border-gray-600 bg-black text-gray-300 hover:bg-gray-800 hover:text-white"
+                                        >
+                                            <Shuffle className="h-4 w-4" />
+                                            Shuffle
                                         </Button>
                                     </div>
                                 )}
