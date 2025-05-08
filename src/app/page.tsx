@@ -10,7 +10,7 @@ export default function Home() {
   const router = useRouter();
   const [selectedEmotion, setSelectedEmotion] = useState<string | null>(null);
   const [selectedRating, setSelectedRating] = useState<number | null>(null);
-  const [selectedDuration, setSelectedDuration] = useState<number | null>(null);
+  const [selectedDuration, setSelectedDuration] = useState<number[]>([30, 120]);
   const [selectedDecades, setSelectedDecades] = useState<string[]>([]);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -22,8 +22,8 @@ export default function Home() {
     if (selectedRating !== null) {
       params.append('popularity', selectedRating.toString());
     }
-    if (selectedDuration) {
-      params.append('duration', JSON.stringify([selectedDuration]));
+    if (selectedDuration.length === 2) {
+      params.append('duration', JSON.stringify(selectedDuration));
     }
     if (selectedDecades.length > 0) {
       params.append('decades', selectedDecades.join(','));
@@ -38,10 +38,8 @@ export default function Home() {
       setSelectedEmotion,
       popularity: selectedRating || 0,
       setPopularity: setSelectedRating,
-      duration: selectedDuration ? [selectedDuration] : [],
-      setDuration: (value: number[]) => {
-        setSelectedDuration(value[0] || null);
-      },
+      duration: selectedDuration,
+      setDuration: setSelectedDuration,
       decade: selectedDecades.join(','),
       setDecade: (decade: string | null) => {
         if (decade) {

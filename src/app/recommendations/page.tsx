@@ -54,14 +54,26 @@ function RecommendationsContent() {
 
                 setSelectedEmotion(emotion);
 
-                const response = await fetch(`/api/recommendations?${params.toString()}&page=${currentPage}`);
+                // Get the page from URL params or default to 1
+                const pageParam = params.get('page');
+                const pageNum = pageParam ? parseInt(pageParam) : 1;
+                setCurrentPage(pageNum);
+
+                const response = await fetch(`/api/recommendations?${params.toString()}`);
                 if (!response.ok) {
                     throw new Error('Failed to fetch movies');
                 }
 
                 const data = await response.json();
+                
+                if (data.results.length === 0) {
+                    setError('No movies found for this page');
+                    return;
+                }
+
                 setMovies(data.results);
                 setTotalPages(data.total_pages);
+                setCurrentPage(data.current_page);
                 console.log(`[Recommendations] Emotion: ${emotion}, Results: ${data.results.length}, Total Pages: ${data.total_pages}`);
             } catch (err) {
                 setError(err instanceof Error ? err.message : 'An error occurred');
@@ -71,29 +83,39 @@ function RecommendationsContent() {
         };
 
         fetchMovies();
-    }, [searchParams, currentPage, router]);
+    }, [searchParams, router]);
 
     const handlePageChange = async (newPage: number) => {
-        if (!selectedEmotion) return;
+        if (!selectedEmotion || newPage < 1 || newPage > totalPages) return;
         
         setLoading(true);
         setError(null);
 
         try {
             const params = new URLSearchParams(searchParams.toString());
-            params.append('page', newPage.toString());
+            params.set('page', newPage.toString());
+
+            // Update URL with new page number
+            router.push(`/recommendations?${params.toString()}`, { scroll: false });
 
             const response = await fetch(`/api/recommendations?${params.toString()}`);
-            const data = await response.json();
-
             if (!response.ok) {
-                throw new Error(data.error || 'Failed to fetch recommendations');
+                throw new Error('Failed to fetch movies');
+            }
+
+            const data = await response.json();
+            
+            if (data.results.length === 0) {
+                setError('No movies found for this page');
+                return;
             }
 
             setMovies(data.results);
             setTotalPages(data.total_pages);
             setCurrentPage(data.current_page);
-            console.log(`[Recommendations] Page ${newPage}, Results: ${data.results.length}, Total Pages: ${data.total_pages}`);
+            
+            // Scroll to top of the page
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         } catch (err) {
             console.error('Error fetching recommendations:', err);
             setError(err instanceof Error ? err.message : 'Failed to fetch recommendations');
@@ -115,7 +137,8 @@ function RecommendationsContent() {
         }
     };
 
-    if (loading) {
+    // Only show loading state on initial load
+    if (loading && movies.length === 0) {
         return (
             <main className="min-h-screen flex flex-col bg-black p-4">
                 <div className="w-full max-w-6xl mx-auto">
@@ -130,8 +153,14 @@ function RecommendationsContent() {
                                 {[...Array(6)].map((_, i) => (
                                     <div
                                         key={i}
-                                        className="aspect-[2/3] bg-gray-800/50 rounded-lg animate-pulse"
-                                    />
+                                        className="flex flex-col bg-gray-800/50 rounded-xl overflow-hidden shadow-lg shadow-black/50 border border-white/5"
+                                    >
+                                        <div className="h-72 relative bg-gray-800/50 animate-pulse" />
+                                        <div className="p-4 space-y-3">
+                                            <div className="h-6 bg-gray-800/50 rounded animate-pulse" />
+                                            <div className="h-10 bg-gray-800/50 rounded animate-pulse" />
+                                        </div>
+                                    </div>
                                 ))}
                             </div>
 
@@ -173,51 +202,70 @@ function RecommendationsContent() {
                             ito ang mga pelikulang para sa'yo! • Rating: {popularityText}
                         </p>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 w-full">
-                            {[...movies].sort(() => Math.random() - 0.5).map((movie) => (
-                                <MovieCard key={movie.id} movie={movie} />
-                            ))}
-                        </div>
-
-                        {/* Pagination - Only show if there are results */}
-                        {movies.length > 0 && (
-                            <div className="flex items-center justify-center gap-4 mt-8">
-                                <Button
-                                    variant="outline"
-                                    onClick={() => handlePageChange(currentPage - 1)}
-                                    disabled={currentPage === 1}
-                                    className="border-gray-600 bg-black text-gray-300 hover:bg-gray-800 hover:text-white"
-                                >
-                                    <ChevronLeft className="h-4 w-4" />
-                                    Previous
-                                </Button>
-                                <span className="text-white">
-                                    Page {currentPage} of {totalPages}
-                                </span>
-                                <Button
-                                    variant="outline"
-                                    onClick={() => handlePageChange(currentPage + 1)}
-                                    disabled={currentPage === totalPages}
-                                    className="border-gray-600 bg-black text-gray-300 hover:bg-gray-800 hover:text-white"
-                                >
-                                    Next
-                                    <ChevronRight className="h-4 w-4" />
-                                </Button>
+                        {loading ? (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 w-full">
+                                {[...Array(6)].map((_, i) => (
+                                    <div
+                                        key={i}
+                                        className="flex flex-col bg-gray-800/50 rounded-xl overflow-hidden shadow-lg shadow-black/50 border border-white/5"
+                                    >
+                                        <div className="h-72 relative bg-gray-800/50 animate-pulse" />
+                                        <div className="p-4 space-y-3">
+                                            <div className="h-6 bg-gray-800/50 rounded animate-pulse" />
+                                            <div className="h-10 bg-gray-800/50 rounded animate-pulse" />
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
+                        ) : (
+                            <>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 w-full">
+                                    {movies.map((movie) => (
+                                        <MovieCard key={movie.id} movie={movie} />
+                                    ))}
+                                </div>
+
+                                {/* Pagination - Only show if there are results and more than one page */}
+                                {movies.length > 0 && totalPages > 1 && (
+                                    <div className="flex items-center justify-center gap-4 mt-8">
+                                        <Button
+                                            variant="outline"
+                                            onClick={() => handlePageChange(currentPage - 1)}
+                                            disabled={currentPage === 1 || loading}
+                                            className="border-gray-600 bg-black text-gray-300 hover:bg-gray-800 hover:text-white"
+                                        >
+                                            <ChevronLeft className="h-4 w-4" />
+                                            Previous
+                                        </Button>
+                                        <span className="text-white">
+                                            Page {currentPage} of {totalPages}
+                                        </span>
+                                        <Button
+                                            variant="outline"
+                                            onClick={() => handlePageChange(currentPage + 1)}
+                                            disabled={currentPage === totalPages || loading}
+                                            className="border-gray-600 bg-black text-gray-300 hover:bg-gray-800 hover:text-white"
+                                        >
+                                            Next
+                                            <ChevronRight className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                )}
+
+                                {/* Show message when no results */}
+                                {!loading && movies.length === 0 && (
+                                    <div className="text-center text-gray-400 py-12">
+                                        No movies found for your current filters. Try adjusting your preferences.
+                                    </div>
+                                )}
+                            </>
                         )}
 
-                        {/* Show message when no results */}
-                        {!loading && movies.length === 0 && (
-                            <div className="text-center text-gray-400 py-12">
-                                No movies found for your current filters. Try adjusting your preferences.
-                            </div>
-                        )}
-
-                        <div className="mt-8">
+                        <div className="w-full mt-8">
                             <Link href="/">
                                 <Button
                                     variant="outline"
-                                    className="w-full border-gray-600 bg-black text-gray-300 hover:bg-gray-800 hover:text-white"
+                                    className="max-w-xs mx-auto border-gray-600 bg-black text-gray-300 hover:bg-gray-800 hover:text-white"
                                 >
                                     <Home className="mr-2 h-4 w-4" />
                                     Bumalik sa Simula

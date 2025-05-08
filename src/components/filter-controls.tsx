@@ -5,7 +5,7 @@ import { Star } from "lucide-react"
 import { useFilters } from "./emotion-selector"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { useContext } from "react"
+import { useContext, useEffect } from "react"
 import { FilterContext } from "./emotion-selector"
 
 export default function FilterControls() {
@@ -29,38 +29,70 @@ export default function FilterControls() {
         { value: "20s", label: "20s", years: [2020, 2029] },
     ]
 
-    // Duration labels
+    // Duration labels with exact values
     const durationLabels = [
-        { value: 0, label: "Any" },
-        { value: 10, label: "<10m" },
-        { value: 30, label: "30m" },
-        { value: 60, label: "1h" },
-        { value: 90, label: "1.5h" },
-        { value: 120, label: "2h+" },
+        { value: 0, label: "15m" },
+        { value: 1, label: "30m" },
+        { value: 2, label: "45m" },
+        { value: 3, label: "1h" },
+        { value: 4, label: "1h30m" },
+        { value: 5, label: "2h" },
+        { value: 6, label: "2h30m" },
+        { value: 7, label: "3h+" },
     ]
 
-    // Get the closest duration label
-    const getCurrentDurationLabel = () => {
-        if (!duration || duration.length === 0) return "Any";
-        const currentValue = duration[0];
-        if (currentValue === 0) return "Any";
-        
-        let closestLabel = durationLabels[1]; // Start from first non-Any label
-
-        for (const label of durationLabels.slice(1)) { // Skip the Any label
-            if (Math.abs(label.value - currentValue) < Math.abs(closestLabel.value - currentValue)) {
-                closestLabel = label;
-            }
-        }
-
-        return closestLabel.label;
+    // Convert slider index to minutes
+    const indexToMinutes = (index: number) => {
+        const values = [15, 30, 45, 60, 90, 120, 150, 180];
+        return values[index];
     }
+
+    // Convert minutes to slider index
+    const minutesToIndex = (minutes: number) => {
+        const values = [15, 30, 45, 60, 90, 120, 150, 180];
+        return values.indexOf(minutes);
+    }
+
+    // Format duration for display
+    const formatDuration = (minutes: number) => {
+        const hours = Math.floor(minutes / 60);
+        const mins = minutes % 60;
+        if (hours === 0) return `${mins}m`;
+        if (mins === 0) return `${hours}h`;
+        return `${hours}h${mins}m`;
+    }
+
+    // Get the current duration label
+    const getCurrentDurationLabel = () => {
+        if (!duration || duration.length !== 2) return "Any";
+        const [min, max] = duration;
+        if (min === max) {
+            return formatDuration(min);
+        }
+        return `${formatDuration(min)} - ${formatDuration(max)}`;
+    }
+
+    // Initialize duration if empty
+    useEffect(() => {
+        if (!duration || duration.length !== 2) {
+            setDuration([30, 120]);
+        }
+    }, []);
+
+    // Handle duration change
+    const handleDurationChange = (newValue: number[]) => {
+        const minutes = newValue.map(indexToMinutes);
+        setDuration(minutes);
+    };
+
+    // Convert current duration to slider indices
+    const currentSliderValues = duration ? duration.map(minutesToIndex) : [1, 5];
 
     const handleSearch = () => {
         const params = new URLSearchParams();
         if (selectedEmotion) params.append('emotion', selectedEmotion);
         if (popularity !== null) params.append('popularity', popularity.toString());
-        if (duration && duration.length > 0 && duration[0] !== 0) params.append('duration', JSON.stringify(duration));
+        if (duration && duration.length === 2) params.append('duration', JSON.stringify(duration));
         if (decade) params.append('decades', decade);
         router.push(`/recommendations?${params.toString()}`);
     };
@@ -124,7 +156,7 @@ export default function FilterControls() {
                 </div>
             </div>
             {/* Duration Time */}
-            <div>
+            <div className="space-y-3">
                 <div className="flex justify-between items-center">
                     <label className="text-gray-300 text-sm">Duration:</label>
                     <span className="text-purple-200 font-medium">{getCurrentDurationLabel()}</span>
@@ -132,24 +164,28 @@ export default function FilterControls() {
                 <div className="px-1 mt-4">
                     <Slider.Root
                         className="relative flex items-center select-none touch-none w-full h-5"
-                        value={duration.length > 0 ? duration : [0]}
-                        onValueChange={setDuration}
-                        max={120}
                         min={0}
+                        max={7}
                         step={1}
+                        value={currentSliderValues}
+                        onValueChange={handleDurationChange}
                     >
                         <Slider.Track className="bg-gray-700 relative grow rounded-full h-[3px]">
                             <Slider.Range className="absolute bg-gradient-to-r from-pink-400 to-purple-500 rounded-full h-full" />
                         </Slider.Track>
                         <Slider.Thumb 
                             className="block w-5 h-5 bg-gradient-to-r from-pink-400 to-purple-500 rounded-full shadow hover:bg-pink-500 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 focus:ring-offset-gray-900"
-                            aria-label="Duration"
+                            aria-label="Minimum duration"
+                        />
+                        <Slider.Thumb 
+                            className="block w-5 h-5 bg-gradient-to-r from-pink-400 to-purple-500 rounded-full shadow hover:bg-pink-500 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 focus:ring-offset-gray-900"
+                            aria-label="Maximum duration"
                         />
                     </Slider.Root>
 
                     <div className="flex justify-between mt-2 text-xs text-gray-400">
-                        {durationLabels.map((label, index) => (
-                            <div key={index} className="flex flex-col items-center">
+                        {durationLabels.map((label) => (
+                            <div key={label.value} className="flex flex-col items-center">
                                 <span className="h-1 w-1 rounded-full bg-gray-500 mb-1"></span>
                                 {label.label}
                             </div>

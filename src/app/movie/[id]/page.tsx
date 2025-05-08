@@ -80,20 +80,20 @@ export default function MovieDetailsPage() {
             <div className="w-full max-w-4xl mx-auto">
                 {/* Back Button */}
                 <div className="p-4">
-                    <Link 
-                        href={searchParams.get('query') 
-                            ? `/search?query=${encodeURIComponent(searchParams.get('query')!)}`
-                            : '/recommendations'
-                        }
+                    <Button
+                        variant="outline"
+                        className="border-gray-600 bg-black text-gray-300 hover:bg-gray-800 hover:text-white"
+                        onClick={() => {
+                            if (searchParams.get('query')) {
+                                router.push(`/search?query=${encodeURIComponent(searchParams.get('query')!)}`);
+                            } else {
+                                router.back();
+                            }
+                        }}
                     >
-                        <Button
-                            variant="outline"
-                            className="border-gray-600 bg-black text-gray-300 hover:bg-gray-800 hover:text-white"
-                        >
-                            <ChevronLeft className="mr-2 h-4 w-4" />
-                            Bumalik
-                        </Button>
-                    </Link>
+                        <ChevronLeft className="mr-2 h-4 w-4" />
+                        Bumalik
+                    </Button>
                 </div>
 
                 {/* Movie Details */}
