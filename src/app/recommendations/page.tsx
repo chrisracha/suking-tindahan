@@ -233,33 +233,33 @@ function RecommendationsContent() {
     return (
         <main className="min-h-screen flex flex-col bg-black p-4">
             <div className="w-full max-w-6xl mx-auto">
-                <div className="p-6 md:p-8 rounded-3xl bg-gradient-to-br from-gray-900 to-gray-950 shadow-[0_0_15px_rgba(255,255,255,0.1)]">
+                <div className="p-4 sm:p-6 md:p-8 rounded-3xl bg-gradient-to-br from-gray-900 to-gray-950 shadow-[0_0_15px_rgba(255,255,255,0.1)]">
                     <div className="flex flex-col items-center">
-                        <h2 className="text-3xl md:text-4xl font-bold leading-normal text-center bg-gradient-to-r from-pink-200 via-purple-200 to-indigo-200 text-transparent bg-clip-text mb-2">
+                        <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold leading-normal text-center bg-gradient-to-r from-pink-200 via-purple-200 to-indigo-200 text-transparent bg-clip-text mb-2">
                             {getEmotionPrefix(selectedEmotion)} ka ngayon,
                         </h2>
-                        <p className="text-white mb-8 text-center italic">
+                        <p className="text-white mb-8 text-center italic text-sm sm:text-base">
                             ito ang mga pelikulang para sa'yo!
                         </p>
 
                         {loading ? (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 w-full">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 w-full">
                                 {[...Array(6)].map((_, i) => (
                                     <div
                                         key={i}
                                         className="flex flex-col bg-gray-800/50 rounded-xl overflow-hidden shadow-lg shadow-black/50 border border-white/5"
                                     >
-                                        <div className="h-72 relative bg-gray-800/50 animate-pulse" />
-                                        <div className="p-4 space-y-3">
-                                            <div className="h-6 bg-gray-800/50 rounded animate-pulse" />
-                                            <div className="h-10 bg-gray-800/50 rounded animate-pulse" />
+                                        <div className="h-48 sm:h-56 md:h-72 relative bg-gray-800/50 animate-pulse" />
+                                        <div className="p-3 sm:p-4 space-y-2 sm:space-y-3">
+                                            <div className="h-4 sm:h-6 bg-gray-800/50 rounded animate-pulse" />
+                                            <div className="h-8 sm:h-10 bg-gray-800/50 rounded animate-pulse" />
                                         </div>
                                     </div>
                                 ))}
                             </div>
                         ) : (
                             <>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 w-full">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 w-full">
                                     {movies.map((movie) => (
                                         <MovieCard key={movie.id} movie={movie} />
                                     ))}
@@ -267,54 +267,56 @@ function RecommendationsContent() {
 
                                 {/* Pagination - Only show if there are results and more than one page */}
                                 {movies.length > 0 && totalPages > 1 && (
-                                    <div className="flex items-center justify-center gap-4 mt-8">
-                                        <Button
-                                            variant="outline"
-                                            onClick={() => handlePageChange(currentPage - 1)}
-                                            disabled={currentPage === 1 || loading}
-                                            className="border-gray-600 bg-black text-gray-300 hover:bg-gray-800 hover:text-white"
-                                        >
-                                            <ChevronLeft className="h-4 w-4" />
-                                            Previous
-                                        </Button>
-                                        <span className="text-white">
-                                            Page {currentPage} of {totalPages}
-                                        </span>
-                                        <Button
-                                            variant="outline"
-                                            onClick={() => handlePageChange(currentPage + 1)}
-                                            disabled={currentPage === totalPages || loading}
-                                            className="border-gray-600 bg-black text-gray-300 hover:bg-gray-800 hover:text-white"
-                                        >
-                                            Next
-                                            <ChevronRight className="h-4 w-4" />
-                                        </Button>
+                                    <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mt-8 w-full">
+                                        <div className="flex items-center gap-2 sm:gap-4">
+                                            <Button
+                                                variant="outline"
+                                                onClick={() => handlePageChange(currentPage - 1)}
+                                                disabled={currentPage === 1 || loading}
+                                                className="border-gray-600 bg-black text-gray-300 hover:bg-gray-800 hover:text-white text-sm sm:text-base"
+                                            >
+                                                <ChevronLeft className="h-4 w-4" />
+                                                <span className="hidden sm:inline">Previous</span>
+                                            </Button>
+                                            <span className="text-white text-sm sm:text-base">
+                                                Page {currentPage} of {totalPages}
+                                            </span>
+                                            <Button
+                                                variant="outline"
+                                                onClick={() => handlePageChange(currentPage + 1)}
+                                                disabled={currentPage === totalPages || loading}
+                                                className="border-gray-600 bg-black text-gray-300 hover:bg-gray-800 hover:text-white text-sm sm:text-base"
+                                            >
+                                                <span className="hidden sm:inline">Next</span>
+                                                <ChevronRight className="h-4 w-4" />
+                                            </Button>
+                                        </div>
                                         <Button
                                             variant="outline"
                                             onClick={handleShuffle}
                                             disabled={loading}
-                                            className="border-gray-600 bg-black text-gray-300 hover:bg-gray-800 hover:text-white"
+                                            className="border-gray-600 bg-black text-gray-300 hover:bg-gray-800 hover:text-white text-sm sm:text-base"
                                         >
                                             <Shuffle className="h-4 w-4" />
-                                            Shuffle
+                                            <span className="hidden sm:inline ml-2">Shuffle</span>
                                         </Button>
                                     </div>
                                 )}
 
                                 {/* Show message when no results */}
                                 {!loading && movies.length === 0 && (
-                                    <div className="text-center text-gray-400 py-12">
+                                    <div className="text-center text-gray-400 py-8 sm:py-12 text-sm sm:text-base">
                                         No movies found for your current filters. Try adjusting your preferences.
                                     </div>
                                 )}
                             </>
                         )}
 
-                        <div className="w-full mt-8">
-                            <Link href="/">
+                        <div className="w-full mt-8 flex justify-center">
+                            <Link href="/" className="block w-full sm:w-auto max-w-xs">
                                 <Button
                                     variant="outline"
-                                    className="max-w-xs mx-auto border-gray-600 bg-black text-gray-300 hover:bg-gray-800 hover:text-white"
+                                    className="w-full border-gray-600 bg-black text-gray-300 hover:bg-gray-800 hover:text-white text-sm sm:text-base"
                                 >
                                     <Home className="mr-2 h-4 w-4" />
                                     Bumalik sa Simula
@@ -326,7 +328,7 @@ function RecommendationsContent() {
 
                 {/* Footer */}
                 <div className="p-3 text-center mt-4">
-                    <p className="text-gray-400 text-sm">© 2025 Suking Tindahan | DSS</p>
+                    <p className="text-gray-400 text-xs sm:text-sm">© 2025 Suking Tindahan | DSS</p>
                 </div>
             </div>
         </main>
