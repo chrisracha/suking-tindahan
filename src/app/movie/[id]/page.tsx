@@ -9,6 +9,7 @@ import Badge from "@/components/Badge";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
+import { VideoModal } from "@/components/video-modal";
 
 export default function MovieDetailsPage() {
     const params = useParams();
@@ -17,6 +18,7 @@ export default function MovieDetailsPage() {
     const [movie, setMovie] = useState<Movie | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
 
     useEffect(() => {
         async function fetchMovieDetails() {
@@ -111,15 +113,13 @@ export default function MovieDetailsPage() {
                             </div>
 
                             {movie.trailer && (
-                                <a
-                                    href={`https://www.youtube.com/watch?v=${movie.trailer.key}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
+                                <Button
+                                    onClick={() => setIsVideoModalOpen(true)}
                                     className="w-full mt-4 bg-gradient-to-r from-red-400 to-red-600 hover:from-red-500 hover:to-red-700 flex items-center justify-center py-2 rounded-md text-white font-semibold"
                                 >
                                     <Play className="h-4 w-4 mr-2" />
                                     Trailer
-                                </a>
+                                </Button>
                             )}
                         </div>
 
@@ -216,6 +216,15 @@ export default function MovieDetailsPage() {
                     <p className="text-gray-400 text-sm">© 2025 Suking Tindahan</p>
                 </div>
             </div>
+
+            {/* Video Modal */}
+            {movie?.trailer && (
+                <VideoModal
+                    isOpen={isVideoModalOpen}
+                    onClose={() => setIsVideoModalOpen(false)}
+                    videoId={movie.trailer.key}
+                />
+            )}
         </main>
     );
 } 
