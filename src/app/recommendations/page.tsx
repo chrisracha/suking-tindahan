@@ -25,7 +25,19 @@ function RecommendationsContent() {
 
     // Get the popularity from search params
     const popularity = searchParams.get('popularity');
-    const popularityText = !popularity || popularity === '0' ? 'Any' : `${popularity}/5`;
+    const getPopularityText = (rating: string | null) => {
+        if (!rating || rating === '0') return 'Any';
+        const numRating = parseInt(rating);
+        switch (numRating) {
+            case 1: return '1-2/10';
+            case 2: return '3-4/10';
+            case 3: return '5-6/10';
+            case 4: return '7-8/10';
+            case 5: return '9-10/10';
+            default: return 'Any';
+        }
+    };
+    const popularityText = getPopularityText(popularity);
 
     useEffect(() => {
         const fetchMovies = async () => {
@@ -105,8 +117,38 @@ function RecommendationsContent() {
 
     if (loading) {
         return (
-            <main className="min-h-screen flex flex-col items-center justify-center p-4 bg-black">
-                <Loader2 className="h-8 w-8 animate-spin text-[#00E054]" />
+            <main className="min-h-screen flex flex-col bg-black p-4">
+                <div className="w-full max-w-6xl mx-auto">
+                    <div className="p-6 md:p-8 rounded-3xl bg-gradient-to-br from-gray-900 to-gray-950 shadow-[0_0_15px_rgba(255,255,255,0.1)]">
+                        <div className="flex flex-col items-center">
+                            {/* Loading skeleton for title */}
+                            <div className="h-12 w-3/4 bg-gray-800/50 rounded-lg animate-pulse mb-2" />
+                            <div className="h-6 w-1/2 bg-gray-800/50 rounded-lg animate-pulse mb-8" />
+
+                            {/* Loading skeleton for movie grid */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 w-full">
+                                {[...Array(6)].map((_, i) => (
+                                    <div
+                                        key={i}
+                                        className="aspect-[2/3] bg-gray-800/50 rounded-lg animate-pulse"
+                                    />
+                                ))}
+                            </div>
+
+                            {/* Loading skeleton for pagination */}
+                            <div className="flex items-center justify-center gap-4 mt-8">
+                                <div className="h-10 w-24 bg-gray-800/50 rounded-lg animate-pulse" />
+                                <div className="h-6 w-32 bg-gray-800/50 rounded-lg animate-pulse" />
+                                <div className="h-10 w-24 bg-gray-800/50 rounded-lg animate-pulse" />
+                            </div>
+
+                            {/* Loading skeleton for back button */}
+                            <div className="mt-8 w-full">
+                                <div className="h-10 w-full bg-gray-800/50 rounded-lg animate-pulse" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </main>
         );
     }
@@ -125,10 +167,10 @@ function RecommendationsContent() {
                 <div className="p-6 md:p-8 rounded-3xl bg-gradient-to-br from-gray-900 to-gray-950 shadow-[0_0_15px_rgba(255,255,255,0.1)]">
                     <div className="flex flex-col items-center">
                         <h2 className="text-3xl md:text-4xl font-bold leading-normal text-center bg-gradient-to-r from-pink-200 via-purple-200 to-indigo-200 text-transparent bg-clip-text mb-2">
-                            {getEmotionPrefix(selectedEmotion)} ang nararamdaman mo
+                            {getEmotionPrefix(selectedEmotion)} ka ngayon,
                         </h2>
                         <p className="text-white mb-8 text-center italic">
-                            Mga pelikulang para sa'yo! • Rating: {popularityText}
+                            ito ang mga pelikulang para sa'yo! • Rating: {popularityText}
                         </p>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 w-full">
@@ -137,30 +179,39 @@ function RecommendationsContent() {
                             ))}
                         </div>
 
-                        {/* Pagination */}
-                        <div className="flex items-center justify-center gap-4 mt-8">
-                            <Button
-                                variant="outline"
-                                onClick={() => handlePageChange(currentPage - 1)}
-                                disabled={currentPage === 1}
-                                className="border-gray-600 bg-black text-gray-300 hover:bg-gray-800 hover:text-white"
-                            >
-                                <ChevronLeft className="h-4 w-4" />
-                                Previous
-                            </Button>
-                            <span className="text-white">
-                                Page {currentPage} of {totalPages}
-                            </span>
-                            <Button
-                                variant="outline"
-                                onClick={() => handlePageChange(currentPage + 1)}
-                                disabled={currentPage === totalPages}
-                                className="border-gray-600 bg-black text-gray-300 hover:bg-gray-800 hover:text-white"
-                            >
-                                Next
-                                <ChevronRight className="h-4 w-4" />
-                            </Button>
-                        </div>
+                        {/* Pagination - Only show if there are results */}
+                        {movies.length > 0 && (
+                            <div className="flex items-center justify-center gap-4 mt-8">
+                                <Button
+                                    variant="outline"
+                                    onClick={() => handlePageChange(currentPage - 1)}
+                                    disabled={currentPage === 1}
+                                    className="border-gray-600 bg-black text-gray-300 hover:bg-gray-800 hover:text-white"
+                                >
+                                    <ChevronLeft className="h-4 w-4" />
+                                    Previous
+                                </Button>
+                                <span className="text-white">
+                                    Page {currentPage} of {totalPages}
+                                </span>
+                                <Button
+                                    variant="outline"
+                                    onClick={() => handlePageChange(currentPage + 1)}
+                                    disabled={currentPage === totalPages}
+                                    className="border-gray-600 bg-black text-gray-300 hover:bg-gray-800 hover:text-white"
+                                >
+                                    Next
+                                    <ChevronRight className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        )}
+
+                        {/* Show message when no results */}
+                        {!loading && movies.length === 0 && (
+                            <div className="text-center text-gray-400 py-12">
+                                No movies found for your current filters. Try adjusting your preferences.
+                            </div>
+                        )}
 
                         <div className="mt-8">
                             <Link href="/">

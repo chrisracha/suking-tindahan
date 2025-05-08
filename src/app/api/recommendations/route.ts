@@ -75,7 +75,15 @@ export async function GET(request: Request) {
         discoverUrl.searchParams.append('sort_by', 'popularity.desc');
         discoverUrl.searchParams.append('include_adult', 'false');
         discoverUrl.searchParams.append('with_origin_country', 'PH');
-        discoverUrl.searchParams.append('with_genres', emotionMapping.genres.join('|')); // Use pipe for OR logic
+        
+        // Strictly use only the genres for the selected emotion
+        discoverUrl.searchParams.append('with_genres', emotionMapping.genres.join('|'));
+        
+        // Add keywords for better emotion matching
+        // if (emotionMapping.keywords.length > 0) {
+        //     discoverUrl.searchParams.append('with_keywords', emotionMapping.keywords.join(','));
+        // }
+        
         discoverUrl.searchParams.append('page', page);
         discoverUrl.searchParams.append('certification_country', 'PH');
         discoverUrl.searchParams.append('certification.lte', 'PG');
@@ -85,27 +93,35 @@ export async function GET(request: Request) {
             const popularityValue = parseInt(popularity);
             if (!isNaN(popularityValue) && popularityValue > 0) {
                 // Convert 1-5 scale to TMDB's 0-10 scale
-                const tmdbRating = (popularityValue * 2).toString();
+                let tmdbRating;
+                switch (popularityValue) {
+                    case 1: tmdbRating = '2.0'; break;  // 1-2 rating
+                    case 2: tmdbRating = '4.0'; break;  // 3-4 rating
+                    case 3: tmdbRating = '6.0'; break;  // 5-6 rating
+                    case 4: tmdbRating = '8.0'; break;  // 7-8 rating
+                    case 5: tmdbRating = '9.0'; break;  // 9-10 rating
+                    default: tmdbRating = '0.0';
+                }
                 discoverUrl.searchParams.append('vote_average.gte', tmdbRating);
+                // Require more votes for higher ratings to ensure accuracy
+                const minVotes = Math.max(50, popularityValue * 20);
+                discoverUrl.searchParams.append('vote_count.gte', minVotes.toString());
             }
         }
 
         // Add decade filter if specified
         if (decades && decades.length > 0) {
-            const yearRanges = decades.map(decade => {
-                switch (decade) {
-                    case '80s': return { start: 1980, end: 1989 };
-                    case '90s': return { start: 1990, end: 1999 };
-                    case '00s': return { start: 2000, end: 2009 };
-                    case '10s': return { start: 2010, end: 2019 };
-                    case '20s': return { start: 2020, end: 2029 };
-                    default: return null;
-                }
-            }).filter(range => range !== null);
-
+            const yearRanges = decades.map(decade => decadeRanges[decade]).filter(range => range !== null);
+            
             if (yearRanges.length > 0) {
-                discoverUrl.searchParams.append('primary_release_date.gte', yearRanges[0]?.start.toString() || '');
-                discoverUrl.searchParams.append('primary_release_date.lte', yearRanges[yearRanges.length - 1]?.end.toString() || '');
+                // Use exact year ranges from the mapping
+                const startYear = yearRanges[0]?.start;
+                const endYear = yearRanges[yearRanges.length - 1]?.end;
+                
+                if (startYear && endYear) {
+                    discoverUrl.searchParams.append('primary_release_date.gte', `${startYear}-01-01`);
+                    discoverUrl.searchParams.append('primary_release_date.lte', `${endYear}-12-31`);
+                }
             }
         }
 
@@ -114,6 +130,7 @@ export async function GET(request: Request) {
             try {
                 const durationRange = JSON.parse(duration);
                 if (Array.isArray(durationRange) && durationRange.length > 0) {
+                    // Use exact duration range from user input
                     discoverUrl.searchParams.append('with_runtime.gte', durationRange[0].toString());
                     if (durationRange.length > 1) {
                         discoverUrl.searchParams.append('with_runtime.lte', durationRange[1].toString());
@@ -123,6 +140,8 @@ export async function GET(request: Request) {
                 console.error('Invalid duration format:', duration);
             }
         }
+
+        console.log('TMDB API URL:', discoverUrl.toString());
 
         const response = await fetch(discoverUrl.toString(), {
             headers: {
@@ -208,10 +227,14 @@ export async function GET(request: Request) {
         // Limit to 6 results per page
         const limitedResults = validMovies.slice(0, 6);
 
+        // Calculate total pages based on valid results
+        const totalValidResults = Math.min(data.total_results, validMovies.length);
+        const totalPages = Math.max(1, Math.ceil(totalValidResults / 6));
+
         return NextResponse.json({
             results: limitedResults,
-            total_results: data.total_results,
-            total_pages: Math.ceil(data.total_results / 6), // Adjust total pages based on 6 items per page
+            total_results: totalValidResults,
+            total_pages: totalPages,
             current_page: parseInt(page)
         });
 

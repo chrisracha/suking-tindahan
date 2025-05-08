@@ -102,7 +102,7 @@ export default function FilterControls() {
             {/* Popularity */}
             <div className="space-y-3">
                 <div className="flex justify-between items-center">
-                    <label className="text-gray-300 text-sm">Popularity:</label>
+                    <label className="text-gray-300 text-sm">Rating:</label>
                     <span className="text-purple-200 font-medium">{popularity == 0 ? "Any" : `${popularity}/5`}</span>
                 </div>
                 <div className="flex items-center justify-center gap-2">
