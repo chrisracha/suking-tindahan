@@ -3,6 +3,19 @@ import { NextResponse } from 'next/server';
 const TMDB_ACCESS_TOKEN = process.env.NEXT_PUBLIC_TMDB_API_KEY;
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
 
+// CORS headers configuration
+const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Content-Type': 'application/json',
+};
+
+// Handle OPTIONS request for CORS preflight
+export async function OPTIONS() {
+    return NextResponse.json({}, { headers: corsHeaders });
+}
+
 // Mapping Filipino emotions to TMDB genres and search parameters
 const emotionMappings: Record<string, { genres: number[], keywords: string[] }> = {
     'Masaya': {
@@ -51,14 +64,23 @@ export async function GET(request: Request) {
     console.log('Received parameters:', { emotion, popularity, duration, decades, page });
 
     if (!emotion) {
-        return NextResponse.json({ error: 'Emotion parameter is required' }, { status: 400 });
+        return NextResponse.json(
+            { error: 'Emotion parameter is required' }, 
+            { 
+                status: 400,
+                headers: corsHeaders
+            }
+        );
     }
 
     if (!TMDB_ACCESS_TOKEN) {
         console.error('NEXT_PUBLIC_TMDB_API_KEY is not defined');
         return NextResponse.json(
             { error: 'TMDB access token is not configured' },
-            { status: 500 }
+            { 
+                status: 500,
+                headers: corsHeaders
+            }
         );
     }
 
@@ -225,6 +247,8 @@ export async function GET(request: Request) {
             total_results: totalResults,
             total_pages: totalPages,
             current_page: parseInt(page)
+        }, {
+            headers: corsHeaders
         });
 
     } catch (error) {
@@ -237,7 +261,10 @@ export async function GET(request: Request) {
                 total_pages: 0,
                 current_page: parseInt(page)
             },
-            { status: 500 }
+            { 
+                status: 500,
+                headers: corsHeaders
+            }
         );
     }
 } 
