@@ -1,7 +1,6 @@
 # Suking Tindahan: A Mood-based Filipino Film Recommendation System
 
-![Suking Tindahan Banner](https://placehold.co/1200x400/000/FFF?text=Suking%20Tindahan%20Banner%20Image)
-*(Replace with an actual banner/screenshot of the app)*
+![Suking Tindahan Banner](https://raw.githubusercontent.com/chrisracha/suking-tindahan/refs/heads/main/public/images/suking-tindahan.PNG)
 
 ## Project Overview
 
