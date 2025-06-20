@@ -12,11 +12,6 @@
 Experience the application firsthand:
 👉 [**Visit Suking Tindahan Live**](https://suking-tindahan.vercel.app/)
 
-## Repository
-
-The complete source code for this project is available on GitHub:
-🔗 [**GitHub Repository Link**](https://github.com/chrisracha/suking-tindahan)
-
 ## Features
 
 * **Mood-Matched Film Recommendations:** Get personalized movie suggestions based on your current emotional state, choosing from predefined moods like "Masaya" (Happy), "Kinikilig" (In Love), "Malungkot" (Sad), "Pagod" (Tired), "Bored," and "Excited."
