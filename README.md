@@ -24,15 +24,15 @@ Experience the application firsthand:
 
 ## Technologies Used
 
-* **Frontend:**
+* **Frontend:** (Suyman)
     * [Next.js](https://nextjs.org/) (React Framework)
     * [TypeScript](https://www.typescriptlang.org/)
     * [Tailwind CSS](https://tailwindcss.com/)
-* **Backend:**
+* **Backend:** (Salcedo & Dalion)
     * Custom API built to consume and serve movie data.
 * **Data Source:**
     * [The Movie Database (TMDb) API](https://www.themoviedb.org/documentation/api) (Primary source for film metadata, images, and trailers)
-* **Deployment:**
+* **Deployment:** (Salcedo)
     * [Vercel](https://vercel.com/)
 
 ## Installation (Local Development Setup)
@@ -200,5 +200,3 @@ This project was developed as a final project report and builds upon research an
 * The Movie Database (TMDb) for its extensive API.
 * Bhushan et al. (2024) for insights into mood-based genre classification.
 * Research on decision fatigue in streaming services (Furey, 2023; Joseph, 2025).
-* Information on streaming search engines like JustWatch (Tubb, n.d.).
-* Google Cloud Natural Language API (referenced as a potential future enhancement for sentiment analysis).
